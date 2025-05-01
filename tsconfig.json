@@ -16,6 +16,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "baseUrl": ".",  // Base directory set to the root of the project
+    "paths": {
+      "@/*": ["*"]  // Alias for the base URL (root of the project)
+    },
     "plugins": [
       {
         "name": "next"
