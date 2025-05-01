@@ -226,8 +226,12 @@ export default function EstateTotalsCard() {
             <DropdownMenuContent className="w-64">
               <DropdownMenuCheckboxItem
                 checked={allSelected}
-                indeterminate={selected.length>0 && selected.length<allIds.length}
-                onCheckedChange={c => toggleAll(c as boolean)}
+                onCheckedChange={(c) => toggleAll(c as boolean)}
+                {...(
+                  selected.length > 0 && selected.length < allIds.length
+                    ? { 'data-state': 'indeterminate' as const }   // ← Radix understands this
+                    : {}
+                )}
               >
                 Select all
               </DropdownMenuCheckboxItem>

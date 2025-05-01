@@ -93,18 +93,6 @@ export default function DashboardPage() {
                 <EstateTotalsCard />
               </div>
 
-              {/* Estate × Plant grid */}
-              <div className="px-4 lg:px-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Estate overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <EstatePlantsTable />
-                  </CardContent>
-                </Card>
-              </div>
-
               {/* Live plant status table */}
               <div className="px-4 lg:px-6">
                 <Card>

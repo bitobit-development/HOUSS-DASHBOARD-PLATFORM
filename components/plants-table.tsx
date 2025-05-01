@@ -1,4 +1,3 @@
-// components/plants-table.tsx — completed code including loading overlay, top & bottom pagination, status legend
 'use client';
 
 import { useState } from 'react';
@@ -39,10 +38,13 @@ import {
   MinusCircleIcon,
 } from 'lucide-react';
 
+// -----------------------------------------------------------------------------
+// Types & helpers
+// -----------------------------------------------------------------------------
 export interface PlantRow {
   id: number;
   name: string;
-  status: number; // 1: normal, 2: warning, 3: fault, 0: offline
+  status: number;
   pac: number;
   efficiency: number;
   etoday: number;
@@ -78,6 +80,9 @@ function timeAgoQuarterWords(iso: string | null) {
   return `${h}h ${rem}m ago`;
 }
 
+// -----------------------------------------------------------------------------
+// Columns
+// -----------------------------------------------------------------------------
 const columnDefs: ColumnDef<PlantRow>[] = [
   {
     accessorKey: 'status',
@@ -104,8 +109,8 @@ const columnDefs: ColumnDef<PlantRow>[] = [
       const pct = row.original.efficiency * 100;
       const kw = (row.original.pac / 1000).toFixed(1);
       return (
-        <div className="flex flex-col w-48">
-          <div className="flex justify-between text-xs mb-0.5">
+        <div className="flex w-48 flex-col">
+          <div className="mb-0.5 flex justify-between text-xs">
             <span>{kw} kW</span>
             <span>{pct.toFixed(1)}%</span>
           </div>
@@ -124,27 +129,40 @@ const columnDefs: ColumnDef<PlantRow>[] = [
   },
 ];
 
+// -----------------------------------------------------------------------------
+// Component
+// -----------------------------------------------------------------------------
 export default function PlantsTable() {
   const [page, setPage] = useState(1);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const { data, isLoading, isValidating } = useSWR<ApiResp>(['plants', page], () => getPlants(page));
+  const { data, isLoading, isValidating } = useSWR<ApiResp>(
+    ['plants', page],
+    () => getPlants(page)
+  );
 
-  const rows = data?.data.infos || [];
-  const total = data?.data.total || 0;
-  const pageSize = data?.data.pageSize || 30;
+  const rows      = data?.data.infos  || [];
+  const total     = data?.data.total  || 0;
+  const pageSize  = data?.data.pageSize || 30;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const loading   = isLoading || isValidating;
 
   const table = useReactTable({
     data: rows,
     columns: columnDefs,
-    state: { sorting, columnFilters, globalFilter, pagination: { pageIndex: page - 1, pageSize } },
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+      pagination: { pageIndex: page - 1, pageSize },
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, _id, val) => row.original.name.toLowerCase().includes(String(val).toLowerCase()),
+    globalFilterFn: (row, _id, val) =>
+      row.original.name.toLowerCase().includes(String(val).toLowerCase()),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -153,27 +171,31 @@ export default function PlantsTable() {
     pageCount,
   });
 
-  const loading = isLoading || isValidating;
-
+  // Pagination helpers
   const pagesToShow = () => {
-    const arr: number[] = [];
-    const start = Math.max(1, page - 2);
-    const end = Math.min(pageCount, page + 2);
-    for (let i = start; i <= end; i++) arr.push(i);
-    return arr;
+    const a: number[] = [];
+    for (let i = Math.max(1, page - 2); i <= Math.min(pageCount, page + 2); i++) {
+      a.push(i);
+    }
+    return a;
   };
 
   const PaginationControls = () => (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || loading}>
+      <Button variant="outline" size="icon"
+        onClick={() => setPage(p => Math.max(1, p - 1))}
+        disabled={page === 1 || loading}>
         <ChevronLeftIcon className="size-4" />
       </Button>
-      {pagesToShow().map(num => (
-        <Button key={num} size="sm" variant={num === page ? 'default' : 'outline'} onClick={() => setPage(num)} disabled={loading}>
-          {num}
+      {pagesToShow().map(n => (
+        <Button key={n} size="sm" variant={n === page ? 'default' : 'outline'}
+          onClick={() => setPage(n)} disabled={loading}>
+          {n}
         </Button>
       ))}
-      <Button variant="outline" size="icon" onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page >= pageCount || loading}>
+      <Button variant="outline" size="icon"
+        onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+        disabled={page >= pageCount || loading}>
         <ChevronRightIcon className="size-4" />
       </Button>
       <Input
@@ -182,8 +204,8 @@ export default function PlantsTable() {
         max={pageCount}
         value={page}
         onChange={e => {
-          const val = parseInt(e.target.value, 10);
-          if (!isNaN(val) && val >= 1 && val <= pageCount) setPage(val);
+          const v = parseInt(e.target.value, 10);
+          if (!isNaN(v) && v >= 1 && v <= pageCount) setPage(v);
         }}
         className="w-16"
         placeholder="#"
@@ -191,6 +213,9 @@ export default function PlantsTable() {
     </div>
   );
 
+  // -------------------------------------------------------------------------
+  // JSX
+  // -------------------------------------------------------------------------
   return (
     <div className="relative space-y-4">
       {/* Search & top pagination */}
@@ -205,38 +230,42 @@ export default function PlantsTable() {
       </div>
 
       {/* Loading overlay */}
-      <div
-        className={`absolute inset-x-0 top-24 bottom-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm transition-opacity duration-300 ${loading ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute inset-x-0 top-24 bottom-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm transition-opacity duration-300 ${
+        loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
         <Loader2Icon className="size-8 animate-spin" />
       </div>
 
       {/* Table */}
-      <Table className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+      <Table className={`transition-opacity duration-300 ${
+        loading ? 'opacity-50 pointer-events-none' : ''
+      }`}>
         <TableHeader>
           {table.getHeaderGroups().map(hg => (
             <TableRow key={hg.id}>
-              {hg.headers.map(header => (
+              {hg.headers.map(h => (
                 <TableHead
-                  key={header.id}
-                  className="select-none cursor-pointer"
-                  onClick={() => header.column.toggleSorting()}
+                  key={h.id}
+                  className="cursor-pointer select-none"
+                  onClick={() => h.column.toggleSorting()}
                 >
                   <div className="flex items-center gap-1">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getCanSort() && <ArrowUpDownIcon className="size-3 opacity-50" />}
+                    {flexRender(h.column.columnDef.header, h.getContext())}
+                    {h.column.getCanSort() && <ArrowUpDownIcon className="size-3 opacity-50" />}
                   </div>
                 </TableHead>
               ))}
             </TableRow>
           ))}
         </TableHeader>
+
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map(row => (
               <TableRow key={row.original.id}>
                 {row.getVisibleCells().map(cell => (
                   <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell ?? cell.column.columnDef.accessorKey, cell.getContext())}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
@@ -254,7 +283,7 @@ export default function PlantsTable() {
       {/* Legend + bottom pagination */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center space-x-4">
-          {Object.entries(STATUS_MAP).map(([key,{icon: Icon, label, color}]) => (
+          {Object.entries(STATUS_MAP).map(([key, { icon: Icon, label, color }]) => (
             <div key={key} className="flex items-center gap-1 text-xs">
               <Icon className={`size-4 ${color}`} /> <span>{label}</span>
             </div>

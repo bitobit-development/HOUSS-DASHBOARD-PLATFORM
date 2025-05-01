@@ -1,8 +1,3 @@
-// components/estate_plants_table.tsx
-// -----------------------------------------------------------------------------
-// Estate × Plant table (search / sort / pagination)
-// Backend returns { rows, total, pageSize, pageNumber }.
-// -----------------------------------------------------------------------------
 'use client';
 
 import { useState } from 'react';
@@ -38,22 +33,46 @@ import {
 } from '@/components/ui/table';
 
 // -----------------------------------------------------------------------------
-// Types & fetcher
+// Types
 // -----------------------------------------------------------------------------
-type GEPResponse = Awaited<ReturnType<typeof getEstatePlants>>;
-type ApiResp     = GEPResponse['data'];          // { rows, total, pageSize, … }
-type Row         = ApiResp extends { rows: (infer R)[] } ? R : never;
+export interface EstatePlantRow {
+  id: number;
+  name: string;
+  residential_estates: {
+    id: number;
+    estate_name: string;
+    physical_address: string;
+    estate_type: string;
+    estate_description: string;
+    estate_area: string;
+  };
+  status: number;
+  pac: number;
+  efficiency: number;
+  etoday: number;
+  etotal: number;
+  thumb_url?: string;
+  address?: string;
+}
 
+interface ApiResp {
+  rows: EstatePlantRow[];
+  total: number;
+  pageSize: number;
+  pageNumber: number;
+}
+
+// Fetch a page from the API
 async function fetchPage(page: number): Promise<ApiResp> {
   const { data, error } = await getEstatePlants({ page, pageSize: 30 });
-  if (error) throw error;
-  return data!;
+  if (error || !data) throw error ?? new Error('Unexpected empty payload');
+  return data as unknown as ApiResp; // satisfy TS
 }
 
 // -----------------------------------------------------------------------------
 // Column definitions
 // -----------------------------------------------------------------------------
-const columns: ColumnDef<Row>[] = [
+const columns: ColumnDef<EstatePlantRow>[] = [
   {
     accessorFn: (row) => row.residential_estates.estate_name,
     id: 'estate',
@@ -104,9 +123,7 @@ export default function EstatePlantsTable() {
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _id, val) =>
-      row.original.name
-        .toLowerCase()
-        .includes(String(val).toLowerCase()) ||
+      row.original.name.toLowerCase().includes(String(val).toLowerCase()) ||
       row.original.residential_estates.estate_name
         .toLowerCase()
         .includes(String(val).toLowerCase()),
@@ -118,9 +135,7 @@ export default function EstatePlantsTable() {
     pageCount,
   });
 
-  // -------------------------------------------------------------------------
   // Pagination helpers
-  // -------------------------------------------------------------------------
   const pagesToShow = () => {
     const arr: number[] = [];
     const start = Math.max(1, page - 2);
@@ -131,31 +146,20 @@ export default function EstatePlantsTable() {
 
   const Pagination = () => (
     <div className="flex items-center gap-2">
-      <Button
-        size="icon"
-        variant="outline"
+      <Button size="icon" variant="outline"
         onClick={() => setPage((p) => Math.max(1, p - 1))}
-        disabled={page === 1 || loading}
-      >
+        disabled={page === 1 || loading}>
         <ChevronLeftIcon className="size-4" />
       </Button>
       {pagesToShow().map((n) => (
-        <Button
-          key={n}
-          size="sm"
-          variant={n === page ? 'default' : 'outline'}
-          onClick={() => setPage(n)}
-          disabled={loading}
-        >
+        <Button key={n} size="sm" variant={n === page ? 'default' : 'outline'}
+          onClick={() => setPage(n)} disabled={loading}>
           {n}
         </Button>
       ))}
-      <Button
-        size="icon"
-        variant="outline"
+      <Button size="icon" variant="outline"
         onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-        disabled={page >= pageCount || loading}
-      >
+        disabled={page >= pageCount || loading}>
         <ChevronRightIcon className="size-4" />
       </Button>
       <Input
@@ -190,20 +194,16 @@ export default function EstatePlantsTable() {
       </div>
 
       {/* Loading overlay */}
-      <div
-        className={`absolute inset-x-0 top-24 bottom-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm transition-opacity duration-300 ${
-          loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
+      <div className={`absolute inset-x-0 top-24 bottom-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm transition-opacity duration-300 ${
+        loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
         <Loader2Icon className="size-8 animate-spin" />
       </div>
 
       {/* Table */}
-      <Table
-        className={`transition-opacity duration-300 ${
-          loading ? 'opacity-50 pointer-events-none' : ''
-        }`}
-      >
+      <Table className={`transition-opacity duration-300 ${
+        loading ? 'opacity-50 pointer-events-none' : ''
+      }`}>
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
             <TableRow key={hg.id}>
@@ -215,25 +215,21 @@ export default function EstatePlantsTable() {
                 >
                   <div className="flex items-center gap-1">
                     {flexRender(h.column.columnDef.header, h.getContext())}
-                    {h.column.getCanSort() && (
-                      <ArrowUpDownIcon className="size-3 opacity-50" />
-                    )}
+                    {h.column.getCanSort() && <ArrowUpDownIcon className="size-3 opacity-50" />}
                   </div>
                 </TableHead>
               ))}
             </TableRow>
           ))}
         </TableHeader>
+
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((r) => (
               <TableRow key={r.id}>
                 {r.getVisibleCells().map((c) => (
                   <TableCell key={c.id}>
-                    {flexRender(
-                      c.column.columnDef.cell ?? c.column.columnDef.accessorKey,
-                      c.getContext()
-                    )}
+                    {flexRender(c.column.columnDef.cell, c.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
