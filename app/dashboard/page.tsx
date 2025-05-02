@@ -26,7 +26,7 @@ import StatusSectionCards from '@/components/status-section-cards';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 
 // Dynamic-heavy client components
-const EstatePlantsTable = dynamic(() => import('@/components/estate_plants_table'), { ssr: false });
+// const EstatePlantsTable = dynamic(() => import('@/components/estate_plants_table'), { ssr: false });
 const PlantsTable       = dynamic(() => import('@/components/plants-table'),       { ssr: false });
 const EstateTotalsCard = dynamic(() => import('@/components/estate_totals_card'), { ssr: false });
 

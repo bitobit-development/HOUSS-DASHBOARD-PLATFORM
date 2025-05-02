@@ -8,7 +8,7 @@ type Summary = {
   fault: number;
 };
 
-const COLORS = ['#22c55e', '#f97316', '#ef4444']; // green-500, orange-500, red-500
+const COLORS = ['#000000', '#f42727', '#faff00']; // green-500, orange-500, red-500
 
 export function StatusPieCard({ title, summary }: { title: string; summary: Summary }) {
   const data = [

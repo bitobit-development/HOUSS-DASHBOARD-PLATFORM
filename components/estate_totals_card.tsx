@@ -104,7 +104,8 @@ function EstateRow({ id, name }: { id: number; name: string }) {
 
             {/* Online */}
             <TableCell className="text-right">
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+              <Button size="sm" /* 3-character width, green background */
+                className="bg-green-600 hover:bg-green-700 text-white w-[4ch] justify-center">
                 {onlineCount}
               </Button>
             </TableCell>
